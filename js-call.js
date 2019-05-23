@@ -1,5 +1,6 @@
-Function.prototype.mycall = function(obj = global, ...args) {
+Function.prototype.mycall = function(obj = global) {
   obj._fn_ = this;
+  let args = [...arguments].slice(1);
   obj._fn_(...args);
   delete obj._fn_;
 }
@@ -23,5 +24,5 @@ let b = {
   name: 'jack'
 }
 
-o.fn.call(b);
-o.fn.mycall(b);
+o.fn.call();
+o.fn.mycall();

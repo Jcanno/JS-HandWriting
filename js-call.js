@@ -1,3 +1,7 @@
+/**
+ * 手写call函数
+ * 
+ */
 Function.prototype.mycall = function(obj = global) {
   obj._fn_ = this;
   let args = [...arguments].slice(1);

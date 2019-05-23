@@ -1,3 +1,7 @@
+/**
+ * 手写instanceof函数
+ * 
+ */
 function instanceOf(left, right) {
   let R = right.prototype;
   let L = left.__proto__;

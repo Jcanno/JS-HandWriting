@@ -1,3 +1,7 @@
+/**
+ * 手写JSON.parse函数
+ * 
+ */
 function jsonparse(str) {
   return (new Function('return' + str))();
 }

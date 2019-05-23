@@ -4,7 +4,6 @@
  *  2.改变这个对象的原型对象
  *  3.实现原构造函数 
  */
-
 function New(func) {
   var res = {};
   if(func.prototype !== null) {

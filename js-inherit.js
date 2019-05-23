@@ -1,3 +1,7 @@
+/**
+ * 手写寄生式组合继承
+ * 
+ */
 function Parent(name) {
   this.name = name;
 }

@@ -1,3 +1,8 @@
+/**
+ * 手写bind函数
+ * 通过闭包返回一个函数
+ * 
+ */
 Function.prototype.mybind = function(obj = global ) {
   let self = this;
   let args = [...arguments];

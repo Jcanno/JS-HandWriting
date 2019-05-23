@@ -1,3 +1,7 @@
+/**
+ * 手写apply函数
+ * 
+ */
 Function.prototype.myapply = function(obj = global, arr) {
   obj._fn_ = this;
   // 判断是否有第二个参数

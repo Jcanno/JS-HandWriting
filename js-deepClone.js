@@ -1,3 +1,7 @@
+/**
+ * 手写深拷贝函数
+ * 
+ */
 function deepClone(obj) {
   let result;
   if(typeof obj == 'object') {

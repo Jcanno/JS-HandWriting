@@ -3,7 +3,7 @@
  *  1.核心为类型检测
  *  2.对象中的undefined、function、Symbol会被忽略,数组中会转化成null
  *  3.直接传undefined、function、Symbol会返回undefined
- *  4.
+ *  
  */
 
 // 直接传对象类型外的方法

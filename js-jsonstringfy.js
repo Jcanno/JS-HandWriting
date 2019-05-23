@@ -28,7 +28,11 @@ function typeAssign(i) {
   }else if(/undefined|function|symbol/.test(type)) {
     i = null;
   }else if(type === 'object') {
-    i = jsonstringfy(i)
+    if(Object.prototype.toString.call(i) === '[object Null]') {
+      i = "null";
+    }else {
+      i = jsonstringfy(i);
+    }  
   }
   return i
 }
@@ -38,6 +42,8 @@ function jsonstringfy(obj) {
   let type = typeof obj;
   if(type !== 'object') {
     return typeCheck(type, obj);
+  }else if(Object.prototype.toString.call(obj) === '[object Null]') {
+    return String(null);
   }else {
     let json = [];
     if(Array.isArray(obj)) {
@@ -52,7 +58,7 @@ function jsonstringfy(obj) {
         v = typeAssign(v);
         if(v !== null) {
           json.push(('"' + k + '":') + String(v));
-        }        
+        }
       }
       return ("{") + String(json) + ("}")
     }
@@ -63,7 +69,7 @@ function jsonstringfy(obj) {
 
 // 以下为测试
 Array.prototype.a = 'a';
-let a = [1, true, function(){}, Symbol(), 'aaa', undefined, {a:'a'}, ]
+let a = [1, true, function(){}, Symbol(), 'aaa', undefined, {a:'a'}, null ]
 
 console.log(JSON.stringify(a));
 console.log(typeof JSON.stringify(a));
@@ -76,10 +82,15 @@ let o = {
   d: true,
   e: Symbol(),
   f: function(){},
-  g: undefined
+  g: undefined,
+  h: null
 }
 
 console.log(JSON.stringify(o));
 console.log(typeof JSON.stringify(o));
 console.log(jsonstringfy(o));
 console.log(typeof jsonstringfy(o));
+
+console.log(JSON.stringify(null));
+console.log(jsonstringfy(null));
+

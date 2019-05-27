@@ -12,7 +12,7 @@ function curry(fn, args) {
 
   return function() {
     
-    newArgs = args.concat(Array.prototype.slice.call(arguments));
+    var newArgs = args.concat(Array.prototype.slice.call(arguments));
 
     if(newArgs.length < length) {
       return curry.call(this, fn, newArgs);

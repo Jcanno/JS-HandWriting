@@ -2,7 +2,7 @@
 手写js中常用方法
 
 
-- [手写Call函数](https://github.com/Jcanno/JS-HandWriting/blob/master/js-call.js)
+- [手写call函数](https://github.com/Jcanno/JS-HandWriting/blob/master/js-call.js)
 - [手写apply函数](https://github.com/Jcanno/JS-HandWriting/blob/master/js-apply.js)
 - [手写bind函数](https://github.com/Jcanno/JS-HandWriting/blob/master/js-bind.js)
 - [手写函数柯里化](https://github.com/Jcanno/JS-HandWriting/blob/master/js-curry.js)

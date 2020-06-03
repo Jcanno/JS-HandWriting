@@ -18,24 +18,3 @@ Function.prototype.myapply = function(obj = global, arr) {
   
   delete obj._fn_;
 }
-
-
-
-// 以下为测试
-function fn() {
-  console.log(Array.prototype.slice.call(arguments, 0))
-  console.log(arguments)
-  console.log(this.name);
-}
-
-let o = {
-  name: 'john',
-  fn: fn
-}
-
-let b = {
-  name: 'jack'
-}
-
-o.fn.apply(b, "11");
-o.fn.myapply(b, "11");

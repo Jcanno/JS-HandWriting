@@ -3,40 +3,22 @@
  * 通过闭包返回一个函数
  * 
  */
-Function.prototype.mybind = function(obj = global ) {
-  let self = this;
-  let args = [...arguments];
+Function.prototype.bind = function (context, ...args) {
+	// 异常处理
+	if (typeof this !== "function") {
+		throw new Error("Function.prototype.bind - what is trying to be bound is not callable");
+	}
+	var self = this;
+	var fNOP = function () {};
 
-  return function() {
-    obj._fn_ = self;
-    if(args.length > 1) {
-      obj._fn_(...args.slice(1));
-    }else {
-      obj._fn_();
-    }
-    
-    delete obj._fn_; 
-  }
+	var fbound = function () {
+			self.apply(this instanceof self ? 
+					this : 
+					context, args.concat(Array.prototype.slice.call(arguments)));
+	}
+
+	fNOP.prototype = this.prototype;
+	fbound.prototype = new fNOP();
+
+	return fbound;
 }
-
-
-// 以下为测试
-function fn() {
-  console.log(Array.prototype.slice.call(arguments, 0))
-  console.log(arguments)
-  console.log(this.name);
-}
-
-let o = {
-  name: 'john',
-  fn: fn
-}
-
-let b = {
-  name: 'jack'
-}
-
-var c = o.fn.bind();
-c()
-var d = o.fn.mybind();
-d()

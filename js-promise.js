@@ -1,158 +1,151 @@
-/**
- * 手写promise
- * 
- */
 const PENDING = 'pending';
-const RESOLVED = 'resolved';
+const FULFILLED = 'fulfilled';
 const REJECTED = 'rejected';
 
-function MyPromise(excutor) {
-  const self = this;
-  self.status = PENDING;
-  self.value = undefined;
-  self.reason = undefined;
+function MyPromise(fn) {
+	const self = this;
+	self.status = PENDING;
+	self.value = null;
+	self.error = null;
+	self.fulfillCallbacks = [];
+	self.rejectCallbacks = [];
+	
+	// 改变状态，遍历所有reslove回调
+	const resolve = value => {
+		if(self.status !== PENDING) return;
+		setTimeout(() => {
+			self.status = FULFILLED;
+			self.value = value;
+			self.fulfillCallbacks.forEach(cb => cb(value));
+		});
+	}
 
-  self.onFulfilledCallbacks = [];
-  self.onRejectedCallbacks = [];
+	// 改变状态，遍历所有reject回调
+	const reject = error => {
+		if(self.status !== PENDING) return;
+		setTimeout(() => {
+			self.status = REJECTED;
+			self.error = error;
+			self.rejectCallbacks.forEach(cb => cb(error));
+		});
+	}
 
-  function resolve(value) {
-    if(self.status === PENDING) {
-      self.status = RESOLVED;
-      self.value = value;
-      self.onFulfilledCallbacks.forEach(fn => {
-        fn(self.value);
-      });
-    }
-  }
-
-  function reject(reason) {
-    if(self.status === PENDING) {
-      self.status = REJECTED;
-      self.value = reason;
-      self.onRejectedCallbacks.forEach(fn => {
-        fn(self.reason);
-      })
-    }
-  }
-
-  excutor(resolve, reject)
+	fn(resolve, reject);
 }
 
-MyPromise.prototype.then = function(onFulfilled, onRejected) {
-  const self = this;
-  let promise2 = new MyPromise((resolve, reject) => {
-    if(self.status === PENDING) {
-      self.onFulfilledCallbacks.push(() => {
-        setTimeout(()=>{
-          try {
-            const x = onFulfilled();
-            resolutionProcedure(promise2, x, resolve, reject)
-          } catch(r) {
-            reject(r);
-          }
-        })      
-      })
 
-      self.onRejectedCallbacks.push(() => {
-        setTimeout(()=>{
-          try {
-            const x = onRejected();
-            resolutionProcedure(promise2, x, resolve, reject)
-          } catch(r) {
-            reject(r);
-          }
-        }) 
-      })
-    }
-  
-    if(self.status === RESOLVED) {
-      setTimeout(() => {
-        try {
-          const x = onFulfilled()
-          resolutionProcedure(promise2, x, resolve, reject)
-        } catch (reason) {
-          reject(reason)
-        }
-      })
-    } 
-  
-    if(self.status === REJECTED) {
-      setTimeout(() => {
-        try {
-          const x = onFulfilled()
-          resolutionProcedure(promise2, x, resolve, reject)
-        } catch (reason) {
-          reject(reason)
-        }
-      })
-    }
-  });
+MyPromise.prototype.then = function(fulfilled, rejected) {
+	// 检查传入的参数
+	fulfilled = typeof fulfilled === 'function' ? fulfilled : (value) => value;
+	rejected = typeof rejected === 'function' ? rejected : (error) => {throw error};
 
-  return promise2;
+	let self = this;
+	if(self.status === PENDING) {
+		// 要返回一个promise
+		return new MyPromise((resolve, reject) => {
+			self.fulfillCallbacks.push(value => {
+				try {
+					const x = fulfilled(value);
+					x instanceof MyPromise ? x.then(resolve, reject) : resolve(x)
+				} catch (error) {
+					reject(error)
+				}
+			})
+			self.rejectCallbacks.push(error => {
+				try {
+					const x = rejected(error);
+					x instanceof MyPromise ? x.then(resolve, reject) : resolve(x)
+				} catch (error) {
+					reject(error)
+				}
+			})
+		})
+	}
+
+	if(self.status === FULFILLED) {
+		return new MyPromise((resolve, reject) => {
+			try {
+				// 状态变为成功，会有相应的 self.value
+				let x = fulfilled(self.value);
+				// 拆解x
+				x instanceof MyPromise ? x.then(resolve, reject) : resolve(x)
+			} catch (e) {
+				reject(e);
+			}
+		})
+	}
+	if(self.status === REJECTED) {
+		return new MyPromise((resolve, reject) => {
+			try {
+				// 状态变为成功，会有相应的 self.error
+				let x = rejected(self.error);
+				x instanceof MyPromise ? x.then(resolve, reject) : resolve(x)
+			} catch (e) {
+				reject(e);
+			}
+		})
+	}
 }
 
-function resolutionProcedure(promise2, x, resolve, reject) {
-  if (promise2 === x) {
-    return reject(new TypeError('循环引用!'))
-  }
-
-  let called = false;
-  if (x !== null && (typeof x === 'object' || typeof x === 'function')) {
-    try {
-      let then = x.then;
-      if (typeof then === 'function') {
-        then.call(
-          x,
-          y => {
-            if (called) return;
-            called = true;
-            resolutionProcedure(promise2, y, resolve, reject);
-          },
-          e => {
-            if (called) return;
-            called = true;
-            reject(e);
-          }
-        )
-      } else {
-        resolve(x);
-      }
-    } catch (e) {
-      if (called) return;
-      called = true;
-      reject(e);
-    }
-  } else {
-    resolve(x);
-  }
-
+MyPromise.prototype.catch = function (onRejected) {
+  return this.then(null, onRejected);
 }
 
-let p1 = () => {
-  return new MyPromise((res, rej) => {
-    if(Math.random() > 0.5) {
-      res(333);
-    }else {
-      rej(555);
-    }
+MyPromise.resolve = (param) => {
+  if(param instanceof MyPromise) return param;
+  return new MyPromise((resolve, reject) => {
+    resolve(param);
   })
 }
 
-let p = new MyPromise((res, rej) => {
-  // setTimeout(() => {
-    if(Math.random() > 0.5) {
-      res(11);
-      // return p1()
-    }else {
-      rej(22);
-      // return p1()
-    }
-  // }, 1000);
-  
-})
+MyPromise.reject = function (error) {
+	return new MyPromise((resolve, reject) => {
+		reject(error);
+	});
+}
 
-p.then(res => {
-  console.log(res)
-}, err => {
-  console.log(err)
-})
+MyPromise.prototype.finally = function(callback) {
+  return this.then(value => {
+    return MyPromise.resolve(callback()).then(() => value);
+  }, error => {
+    return MyPromise.resolve(callback()).then(() => {throw error;})
+  })
+}
+
+MyPromise.all = function(promiseArr) {
+	let index = 0
+  let result = []
+  return new MyPromise((resolve, reject) => {
+    promiseArr.forEach((p, i) => {
+      //Promise.resolve(p)用于处理传入值不为Promise的情况
+      MyPromise.resolve(p).then(
+        val => {
+          index++
+          result[i] = val
+          if(index === promiseArr.length) {
+            resolve(result)
+          }
+        },
+        err => {
+          reject(err)
+        }
+      )
+    })
+  })
+}
+
+MyPromise.race = function(promiseArr) {
+	return new MyPromise((resolve, reject) => {
+		//同时执行Promise,如果有一个Promise的状态发生改变,就变更新MyPromise的状态
+		for (let p of promiseArr) {
+			MyPromise.resolve(p).then(  //Promise.resolve(p)用于处理传入值不为Promise的情况
+				value => {
+					resolve(value)        //注意这个resolve是上边new MyPromise的
+				},
+				err => {
+					reject(err)
+				}
+			)
+		}
+	})
+}

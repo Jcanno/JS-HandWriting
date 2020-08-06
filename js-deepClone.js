@@ -2,54 +2,113 @@
  * 手写深拷贝函数
  * 
  */
-function deepClone(obj) {
-  let result;
-  if(typeof obj == 'object') {
-    if(Array.isArray(obj)) {
-      result = [];
-      for(let i = 0; i < obj.length;i++) {
-        result[i] =  typeof obj[i] === "object" ? Object.prototype.toString.call(obj[i]) === '[object Null]' ? null : deepClone(obj[i]) : obj[i];
-      }
-    }else {
-      result = {};
-      for(let i in obj) {
-        result[i] =  typeof obj[i] === "object" ? Object.prototype.toString.call(obj[i]) === '[object Null]' ? null : deepClone(obj[i]) : obj[i];
-      }
-    }
-  }else {
-    result = obj;
+const getType = obj => Object.prototype.toString.call(obj);
+
+const isObject = (target) => (typeof target === 'object' || typeof target === 'function') && target !== null;
+
+const canTraverse = {
+  '[object Map]': true,
+  '[object Set]': true,
+  '[object Array]': true,
+  '[object Object]': true,
+  '[object Arguments]': true,
+};
+const mapTag = '[object Map]';
+const setTag = '[object Set]';
+const boolTag = '[object Boolean]';
+const numberTag = '[object Number]';
+const stringTag = '[object String]';
+const symbolTag = '[object Symbol]';
+const dateTag = '[object Date]';
+const errorTag = '[object Error]';
+const regexpTag = '[object RegExp]';
+const funcTag = '[object Function]';
+
+const handleRegExp = (target) => {
+  const { source, flags } = target;
+  return new target.constructor(source, flags);
+}
+
+const handleFunc = (func) => {
+  // 箭头函数直接返回自身
+  if(!func.prototype) return func;
+  const bodyReg = /(?<={)(.|\n)+(?=})/m;
+  const paramReg = /(?<=\().+(?=\)\s+{)/;
+  const funcString = func.toString();
+  // 分别匹配 函数参数 和 函数体
+  const param = paramReg.exec(funcString);
+  const body = bodyReg.exec(funcString);
+  if(!body) return null;
+  if (param) {
+    const paramArr = param[0].split(',');
+    return new Function(...paramArr, body[0]);
+  } else {
+    return new Function(body[0]);
   }
-  return result
 }
 
-
-
-
-// 以下是测试
-let arr = [1, undefined,function(){},null, Symbol(),true,'aaa'];
-let newArr = deepClone(arr);
-console.log(arr);
-console.log(newArr);
-arr.push(4);
-console.log(arr);
-console.log(newArr);
-
-
-let obj = {
-  a: 1,
-  b: '1',
-  c: undefined,
-  d: function(){},
-  e: Symbol(),
-  f: null,
-  g: true,
+const handleNotTraverse = (target, tag) => {
+  const Ctor = target.constructor;
+  switch(tag) {
+    case boolTag:
+      return new Object(Boolean.prototype.valueOf.call(target));
+    case numberTag:
+      return new Object(Number.prototype.valueOf.call(target));
+    case stringTag:
+      return new Object(String.prototype.valueOf.call(target));
+    case symbolTag:
+      return new Object(Symbol.prototype.valueOf.call(target));
+    case errorTag: 
+    case dateTag:
+      return new Ctor(target);
+    case regexpTag:
+      return handleRegExp(target);
+    case funcTag:
+      return handleFunc(target);
+    default:
+      return new Ctor(target);
+  }
 }
 
-let newObj = deepClone(obj);
-console.log(obj);
-console.log(newObj);
-obj["a"] = 5;
-console.log(obj);
-console.log(newObj);
+const deepClone = (target, map = new WeakMap()) => {
+	// 不是对象，说明是基本类型变量，直接返回
+  if(!isObject(target)) 
+		return target;
+	// 获取变量类型
+  let type = getType(target);
+  let cloneTarget;
+  if(!canTraverse[type]) {
+    // 处理不能遍历的对象
+    return handleNotTraverse(target, type);
+  }else {
+    // 这波操作相当关键，可以保证对象的原型不丢失！
+    let ctor = target.constructor;
+    cloneTarget = new ctor();
+  }
 
+  if(map.get(target)) 
+    return target;
+  map.set(target, true);
 
+  if(type === mapTag) {
+    //处理Map
+    target.forEach((item, key) => {
+      cloneTarget.set(deepClone(key, map), deepClone(item, map));
+    })
+  }
+  
+  if(type === setTag) {
+    //处理Set
+    target.forEach(item => {
+      cloneTarget.add(deepClone(item, map));
+    })
+  }
+
+  // 处理数组和对象
+  for (let prop in target) {
+    if (target.hasOwnProperty(prop)) {
+        cloneTarget[prop] = deepClone(target[prop], map);
+    }
+  }
+  return cloneTarget;
+}

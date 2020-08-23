@@ -2,9 +2,16 @@
  * 手写call函数
  * 
  */
-Function.prototype.mycall = function(obj = global) {
-  obj._fn_ = this;
-  let args = [...arguments].slice(1);
-  obj._fn_(...args);
-  delete obj._fn_;
+Function.prototype.mycall = function(context) {
+	var context = context || window;
+	context.fn = this;
+
+	var args = [];
+	for(var i = 0;i < arguments.length;i++) {
+		args.push('arguments[' + i + ']');
+	}
+	var result = eval('context.fn(' + args + ')');
+
+	delete context.fn;
+	return result;
 }
